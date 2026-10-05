@@ -12,25 +12,25 @@ Source đang có nền News; cập nhật docs không có nghĩa báo cáo thi �
 | --- | --- | --- |
 | StudentNameMVC | Controllers, Views, ViewModels, startup/config/static assets | BLL, DAL tại startup |
 | AIVES.BLL | Interfaces/Services, nghiệp vụ và tính toán | DAL |
-| AIVES.DAL | Entities, Context, Repositories, Singleton DAOs, EF/LINQ | Không BLL/MVC |
+| AIVES.DAL | Entities, Context, Repositories, EF/LINQ | Không BLL/MVC |
 | AIVES.Tests | Unit tests và SQL tests opt-in | Hiện checkout tham chiếu BLL/DAL; nhánh Auth có thể thêm MVC |
 
 Solution `AIVESSystem.sln`, các project .NET 8. Giữ tên folder/project thực hiện có; không tự rename để “giống domain”. Các entity hiện tại SystemAccount/NewsArticle/Category/Tag/NewsTag và SQL scripts 001/002 thuộc News, không phải dữ liệu thi.
 
 ## 3. Ranh giới bắt buộc
 
-Luồng production: View → Controller → Service → Repository → DAO → DbContext → SQL Server.
+Luồng production: View → Controller → Service → Repository → AIVESDbContext → SQL Server.
 
-- MVC: HTTP input, ModelState, authorization, map ViewModel, View/Redirect. Controller không gọi DAL trực tiếp.
+- MVC: HTTP input, ModelState, authorization, map ViewModel, View/Redirect. Controller không gọi DAL/Repository trực tiếp.
 - BLL: phối hợp use case, kiểm tra quyền phạm vi theo trusted actor, áp dụng settings, tính tổng/trung bình/tỷ lệ. Không dùng DbContext hoặc MVC View/HTTP types.
-- DAL: contract đọc/ghi, entity mapping, query scope/LINQ/persistence qua DAO; không định nghĩa công thức UI khác BLL.
+- DAL: contract đọc/ghi, entity mapping, query scope/LINQ/persistence trực tiếp trong Repository; không định nghĩa công thức UI khác BLL.
 - Entity phản ánh schema thực; DTO đọc là snapshot cho use case, không bắt buộc là entity EF; ViewModel chỉ phục vụ UI.
 - Controller/Service không trả nguyên Account navigation/hash ra UI.
 - Không vòng reference. MVC DAL reference chỉ cho composition root, không là lý do bỏ BLL.
 
 ## 4. Lifetime và persistence
 
-Giữ Repository + DAO, DAO Lazy Singleton không chứa DbContext trong field. Repository scoped nhận context scoped rồi truyền vào DAO theo operation. Không singleton context, không query song song trên cùng instance context.
+Repository và AIVESDbContext có vòng đời Scoped. Repository nhận context Scoped qua constructor và thực thi trực tiếp truy vấn EF Core/LINQ. Không dùng Singleton cho Repository hay DbContext (tránh lỗi Captive Dependency và xung đột đồng thời). Toàn bộ tầng DAO trung gian đã được gộp trực tiếp vào Repository.
 
 DAL hiện có `AddAivesDataAccess` dùng SQL Server từ configuration. Không tự gọi Migrate/EnsureCreated. DB-first, scripts mới cần review/quyền riêng; không chạy lại 001/002 để “tạo dữ liệu nhóm 6”. Credentials/AI keys không nằm trong source/log.
 
@@ -42,7 +42,7 @@ Các snapshot settings/result cho nhóm 6 là contract dự kiến, chưa chứn
 | --- | --- | --- |
 | A — BLL/test riêng | Tính báo cáo cá nhân, tổng/trung bình, tỷ lệ và bins | Fake repository và trusted actor trong test |
 | B — HTTP/UI | Controller → Service, authorization thật, chart render | Data adapter có thể là fixture demo được chấp nhận riêng |
-| C — Tích hợp | Auth, lớp được phân công, result provider/DAO/DB thật | Không còn fake tại production registrations |
+| C — Tích hợp | Auth, lớp được phân công, result provider/Repository/DB thật | Không còn fake tại production registrations |
 
 Tên/method đề xuất nằm ở handoff, không phải code đã triển khai. Giai đoạn A không chứng minh login/DB/UI hoặc AI thật; giai đoạn B không được hard-code user để né phần Auth thiếu.
 

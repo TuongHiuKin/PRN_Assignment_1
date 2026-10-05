@@ -7,7 +7,7 @@ delivery failures. Check server logs for configuration/delivery failure types.
 
 Tokens are encrypted and authenticated with ASP.NET Data Protection, expire after
 20 minutes, and bind the account ID, normalized email and current password hash
-fingerprint. No plaintext token is stored in the database. A conditional DAO update
+fingerprint. No plaintext token is stored in the database. A conditional Repository update
 checks the old password hash and active state, so only one concurrent reset succeeds.
 Changing the password invalidates every outstanding reset link for the account.
 Use persistent, shared Data Protection keys when deploying multiple application instances.

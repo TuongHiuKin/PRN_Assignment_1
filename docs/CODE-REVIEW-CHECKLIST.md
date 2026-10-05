@@ -40,7 +40,7 @@ Checklist lấy hai yêu cầu này và xác nhận mới của người dùng l
 | Phải hoàn thành mọi module trước khi đánh giá main flow | Bỏ | Cho phép review từng phần và dùng mock dependency còn thiếu |
 | Báo cáo phải dùng ngày Việt Nam/News.CreatedDate theo BR-15 | Không chuyển nguyên rule sang thi | Phải xác định ngày/lần thi/phạm vi báo cáo theo contract mới |
 | Hash mật khẩu, server validation, authorization, không lộ dữ liệu | Giữ trong phần chức năng phụ thực sự được dùng | Đây là yêu cầu an toàn và kiểm soát truy cập |
-| MVC → Service → Repository → DAO → DbContext | Giữ làm nền kỹ thuật hiện hành, không tự đổi stack | Đổi mục tiêu nghiệp vụ không tự cho phép bỏ ranh giới lớp |
+| MVC → Service → Repository → AIVESDbContext | Giữ làm nền kỹ thuật hiện hành, không tự đổi stack | Đổi mục tiêu nghiệp vụ không tự cho phép bỏ ranh giới lớp |
 | Mock pass nghĩa là hệ thống đã hoàn thành | Cấm | Chỉ chứng minh đúng phần code thật được thực thi |
 
 Không xóa hay đánh hỏng module News chỉ vì ngoài mục tiêu này. Ghi riêng **“chưa liên quan đến main flow nhóm 6”**; không tính module đó là đã đáp ứng báo cáo thi.
@@ -89,7 +89,7 @@ Kết luận phải trả lời riêng:
 Không bắt buộc tạo màn hình chọn riêng nếu ứng dụng đã xác định phạm vi rõ ràng qua route/trang hiện có. Phải kiểm soát ID/phạm vi ở backend.
 
 Chuỗi kỹ thuật khi có persistence:
-View → Controller → Service → Repository → DAO → DbContext → DB.
+View → Controller → Service → Repository → AIVESDbContext → DB.
 
 Trong test review có thể thay Repository/dependency nguồn kết quả bằng fake. Phải ghi rõ đoạn chuỗi không được chạy, không tuyên bố đã xác minh DB nếu chỉ mock.
 
@@ -151,8 +151,8 @@ Bốn điểm cuối đã duyệt: bỏ dở không tính lượt hoàn thành; 
 - [ ] Có cách truy vết từ kết quả đến đúng người, câu và lần thi; không dùng NewsTitle/Tag để giả thành dữ liệu thi mà không có semantics/contract phù hợp.
 - [ ] Ghi rõ nguồn dữ liệu thật, mock, API teammate chưa tích hợp hoặc chưa xác định.
 - [ ] Controller chỉ điều phối input/ModelState/quyền và gọi Service; Service chứa cách tính/nghiệp vụ; không tính khác nhau ở UI và backend.
-- [ ] Giữ chiều MVC → BLL → DAL; không Controller → DB/Repository/DAO. Không tự đổi stack vì đổi main flow.
-- [ ] Với phần DAL hiện hành, giữ Repository → DAO; Singleton không giữ DbContext scoped; không thêm lớp trùng chỉ để đủ tên.
+- [ ] Giữ chiều MVC → BLL → DAL; không Controller → DB/Repository. Controller chỉ gọi BLL Service; Service chỉ gọi Repository interfaces. BLL không dùng DbContext.
+- [ ] Với phần DAL, Repository sử dụng trực tiếp AIVESDbContext; Repository và DbContext luôn Scoped (không biến thành Singleton tránh Captive Dependency); không duy trì tầng DAO trung gian trùng lặp; Repository không chứa quy tắc nghiệp vụ (chỉ chứa data access EF Core/LINQ).
 - [ ] Không tự áp schema/role/rule News vào domain thi. Mã role và DTO mới phải có contract rõ, không tự sửa CHECK/FK để code chạy.
 - [ ] Input ID/bộ lọc được validate; query giới hạn quyền ở backend, không chỉ lọc trên giao diện.
 - [ ] Không hard-code identity production, điểm thống kê hay nhận xét giả; fixture/mock phải nhận diện và tách riêng.

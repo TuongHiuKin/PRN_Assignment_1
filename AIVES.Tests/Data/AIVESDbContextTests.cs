@@ -1,6 +1,6 @@
 using AIVES.DAL.Context;
 using AIVES.DAL;
-using AIVES.DAL.DAOs;
+using AIVES.DAL.Repositories.Implementations;
 using AIVES.DAL.Repositories.Interfaces;
 using AIVES.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -123,19 +123,29 @@ public class AIVESDbContextTests
     }
 
     [Fact]
-    public async Task Dao_singletons_are_thread_safe_and_have_no_context_or_mutable_instance_fields()
+    public void Repositories_are_scoped_depend_directly_on_dbcontext_and_have_no_static_state()
     {
-        foreach (var type in new[] { typeof(SystemAccountDAO), typeof(CategoryDAO), typeof(NewsArticleDAO), typeof(TagDAO) })
+        var repoTypes = new[]
         {
-            Assert.Empty(type.GetConstructors());
-            var instances = await Task.WhenAll(Enumerable.Range(0, 40).Select(_ => Task.Run(() => type.GetProperty("Instance")!.GetValue(null))));
-            Assert.All(instances, instance => Assert.Same(instances[0], instance));
+            typeof(SystemAccountRepository),
+            typeof(CategoryRepository),
+            typeof(NewsArticleRepository),
+            typeof(TagRepository)
+        };
+
+        foreach (var type in repoTypes)
+        {
+            var constructors = type.GetConstructors();
+            Assert.Single(constructors);
+            var parameters = constructors[0].GetParameters();
+            Assert.Contains(parameters, p => p.ParameterType == typeof(AIVESDbContext));
+
             var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static);
-            Assert.All(fields, field =>
+            Assert.All(fields.Where(f => f.IsStatic), field =>
             {
-                Assert.True(field.IsStatic && field.IsInitOnly);
-                Assert.False(typeof(DbContext).IsAssignableFrom(field.FieldType));
+                Assert.True(field.IsInitOnly, $"Static field {field.Name} on {type.Name} must be readonly.");
+                Assert.False(typeof(DbContext).IsAssignableFrom(field.FieldType), $"Static field {field.Name} must not store DbContext.");
             });
         }
     }
@@ -144,10 +154,11 @@ public class AIVESDbContextTests
     public async Task Report_rejects_invalid_range_before_opening_a_connection()
     {
         using var context = CreateContext();
+        var repository = new NewsArticleRepository(context);
         var utc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        await Assert.ThrowsAsync<ArgumentException>(() => NewsArticleDAO.Instance.GetByCreatedDateRangeAsync(context, utc, utc, default));
-        await Assert.ThrowsAsync<ArgumentException>(() => NewsArticleDAO.Instance.GetByCreatedDateRangeAsync(context, utc.AddDays(1), utc, default));
-        await Assert.ThrowsAsync<ArgumentException>(() => NewsArticleDAO.Instance.GetByCreatedDateRangeAsync(context,
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetByCreatedDateRangeAsync(utc, utc, default));
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetByCreatedDateRangeAsync(utc.AddDays(1), utc, default));
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetByCreatedDateRangeAsync(
             DateTime.SpecifyKind(utc, DateTimeKind.Unspecified), utc.AddDays(1), default));
     }
 }

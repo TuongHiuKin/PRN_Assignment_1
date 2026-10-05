@@ -18,8 +18,9 @@ Nền kỹ thuật hiện hành vẫn là ASP.NET Core MVC .NET 8 + BLL + DAL, E
 
 ## Ranh giới và an toàn
 
-- Luồng dữ liệu thật: View → Controller → Service → Repository → DAO → DbContext → SQL Server. Controller không gọi DB/Repository/DAO; BLL không dùng DbContext.
-- MVC → BLL → DAL; MVC cấu hình DAL tại Program.cs. Không reference vòng. DAO Singleton thread-safe, không giữ scoped DbContext; context/repositories scoped.
+- Kiến trúc 3 lớp: `StudentNameMVC` (Presentation) → `AIVES.BLL` (Business Logic) → `AIVES.DAL` (Data Access) → SQL Server. `StudentNameMVC` là project Presentation vật lý đại diện cho tầng MVC của AIVES.
+- Luồng dữ liệu chuẩn: View → Controller → Service → Repository → AIVESDbContext → SQL Server. Controller không gọi trực tiếp DbContext/Repository; BLL không dùng DbContext.
+- MVC → BLL → DAL; MVC cấu hình DAL tại Program.cs. Không reference vòng. Repositories và AIVESDbContext luôn Scoped; không biến Repository hay DbContext thành Singleton. Repository chứa toàn bộ logic EF Core/LINQ và persistence.
 - Không tự map Staff thành Sinh viên hoặc đổi mã role News; kiểm tra principal và phạm vi dữ liệu theo contract được duyệt.
 - Chỉ trong workspace hiện tại. Bảo toàn module cũ và thay đổi teammate; không reset/clean/discard để thuận tiện.
 - Review chỉ đọc/test; implement cần yêu cầu riêng nêu task/phạm vi. Không coi tài liệu này là quyền tự triển khai tất cả.

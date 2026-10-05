@@ -16,7 +16,6 @@ public static class DependencyInjection
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<INewsArticleRepository, NewsArticleRepository>();
         services.AddScoped<ITagRepository, TagRepository>();
-        // Stateless DAOs are accessed through their thread-safe Instance properties.
         return services;
     }
 }

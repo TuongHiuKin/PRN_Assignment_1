@@ -99,7 +99,7 @@ public class MockExamReportRepository : IExamReportRepository
                     AiFeedback = "Sai ranh giới kiến trúc. Controller không được gọi trực tiếp Repository/DbContext mà phải đi qua BLL Service để đảm bảo tính toàn vẹn nghiệp vụ.",
                     Strengths = "Nhận thức được luồng truy vấn cơ bản.",
                     Weaknesses = "Bỏ qua tầng BLL (Business Logic Layer), vi phạm quy chuẩn thiết kế 3 lớp.",
-                    RubricCriteria = "Tuân thủ nghiêm ngặt View -> Controller -> Service -> Repository -> DAO -> DbContext."
+                    RubricCriteria = "Tuân thủ nghiêm ngặt View -> Controller -> Service -> Repository -> AIVESDbContext."
                 },
                 new()
                 {
